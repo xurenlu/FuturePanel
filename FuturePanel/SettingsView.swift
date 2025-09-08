@@ -375,7 +375,7 @@ private struct ColorSwatch: View {
                         .font(.caption)
                         .foregroundColor(adaptiveOnBackground(foreground: .white, background: color))
                     Spacer()
-                    Text(color.toHex(true))
+                    Text(color.toHex(alpha: true))
                         .font(.caption2)
                         .foregroundColor(adaptiveOnBackground(foreground: .white, background: color).opacity(0.85))
                 }
