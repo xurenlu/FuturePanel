@@ -216,7 +216,7 @@ struct ThemePreviewView: View {
 struct DisplaySettingsView: View {
     @ObservedObject var store: SettingsStore
     private var theme: ThemeName { ThemeName(rawValue: store.settings.theme) ?? .oneDark }
-    private var palette: ThemePalette { ThemePalette.palette(for: theme) }
+    private var palette: ThemePalette { ThemePalette.palette(for: theme, overrides: store.settings.themeOverrides) }
     #if os(macOS)
     private var fontFamilies: [String] { NSFontManager.shared.availableFontFamilies.sorted() }
     #else
@@ -365,24 +365,18 @@ private struct PaletteGrid: View {
             ForEach(roles, id: \.1) { item in
                 let role = item.0
                 let color = palette.colors[role] ?? Color.white
-                ColorSwatch(color: color, label: item.1) {
-                    // open a tiny popover with ColorPicker
-                }
-                .contextMenu {
-                    ColorPicker("选择颜色", selection: Binding(
-                        get: { color },
-                        set: { c in onPick?(role, c) }
-                    ))
-                }
+                ColorSwatchInteractive(role: role, color: color, label: item.1, onPick: onPick)
             }
         }
     }
 }
 
-private struct ColorSwatch: View {
-    let color: Color
+private struct ColorSwatchInteractive: View {
+    let role: SemanticRole
+    @State var color: Color
     let label: String
-    var onTap: (() -> Void)? = nil
+    var onPick: ((SemanticRole, Color) -> Void)? = nil
+    @State private var showPicker = false
     var body: some View {
         RoundedRectangle(cornerRadius: 6)
             .fill(color)
@@ -403,7 +397,21 @@ private struct ColorSwatch: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
-            .onTapGesture { onTap?() }
+            .onTapGesture { showPicker.toggle() }
+            .popover(isPresented: $showPicker) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("选择 \(label) 颜色")
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    ColorPicker("", selection: $color, supportsOpacity: true)
+                        .labelsHidden()
+                        .frame(width: 180)
+                }
+                .padding(12)
+                .onChange(of: color) { newValue in
+                    onPick?(role, newValue)
+                }
+            }
     }
 }
 
