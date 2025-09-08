@@ -96,12 +96,9 @@ struct ContentView: View {
             }
             // Close icon pinned to top-right
             .overlay(alignment: .topTrailing) {
-                Image(systemName: "xmark.circle.fill")
-                    .foregroundColor(.primary)
-                    .padding(3)
-                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.28))
-                    .clipShape(Circle())
-                    .shadow(color: Color.black.opacity(0.6), radius: 4, x: 0, y: 2)
+                Image(systemName: "xmark")
+                    .font(.system(size: 14, weight: .semibold))
+                    .foregroundColor(ThemePalette.palette(for: theme).colors[.primary]!)
                     .padding(.top, 6)
                     .padding(.trailing, 6)
                     .onTapGesture {
