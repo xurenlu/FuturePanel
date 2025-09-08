@@ -49,15 +49,14 @@ struct ContentView: View {
                             Text(String(msg.id.suffix(6))).foregroundColor(pal.colors[.debug]!)
                         }
                         // Render using default DSL template
-                        let line = TemplateEngine.render(
+                        let segments = TemplateEngine.renderSegments(
                             template: settingsStore.settings.defaultTemplate,
                             jsonString: msg.raw,
                             metaTimeString: msg.timeString,
                             id: msg.id
                         )
-                        highlightedText(line)
+                        styledText(from: segments, palette: ThemePalette.palette(for: theme), keyword: keyword)
                             .font(.custom(settingsStore.settings.fontFamily, size: settingsStore.settings.fontSize))
-                            .foregroundColor(ThemePalette.palette(for: theme).colors[.primary]!)
                             .textSelection(.enabled)
                     }
                     .listRowSeparator(.hidden)
@@ -178,7 +177,35 @@ struct ContentView: View {
         }
     }
 
-    
+    private func styledText(from segments: [TemplateEngine.StyledSegment], palette: ThemePalette, keyword: String) -> Text {
+        var result = Text("")
+        for seg in segments {
+            let color = colorForRoleName(seg.roleName, palette: palette)
+            let piece: Text
+            if keyword.isEmpty {
+                piece = Text(seg.text).foregroundColor(color)
+            } else {
+                piece = Highlighter.highlight(text: seg.text, keyword: keyword).foregroundColor(color)
+            }
+            result = result + piece
+        }
+        return result
+    }
+
+    private func colorForRoleName(_ name: String?, palette: ThemePalette) -> Color {
+        guard let n = name?.lowercased() else { return palette.colors[.primary]! }
+        switch n {
+        case "primary": return palette.colors[.primary]!
+        case "second", "secondary": return palette.colors[.second]!
+        case "warning", "warn": return palette.colors[.warning]!
+        case "error": return palette.colors[.error]!
+        case "notice", "info", "success": return palette.colors[.notice]!
+        case "debug": return palette.colors[.debug]!
+        case "normal", "gray": return palette.colors[.normal]!
+        default: return palette.colors[.primary]!
+        }
+    }
+
 }
 
 #Preview {
