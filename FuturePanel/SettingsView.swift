@@ -250,6 +250,47 @@ struct DisplaySettingsView: View {
                             Text(t.rawValue).tag(t)
                         }
                     }
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text("样式色板")
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        let roles: [(SemanticRole, String)] = [
+                            (.primary, "primary"),
+                            (.second, "second"),
+                            (.notice, "notice (info)"),
+                            (.warning, "warning"),
+                            (.error, "error"),
+                            (.debug, "debug"),
+                            (.normal, "normal"),
+                        ]
+                        let pal = palette
+                        LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
+                            ForEach(0..<roles.count, id: \.self) { i in
+                                let role = roles[i].0
+                                let label = roles[i].1
+                                let color = pal.colors[role] ?? Color.white
+                                RoundedRectangle(cornerRadius: 6)
+                                    .fill(color)
+                                    .frame(height: 28)
+                                    .overlay(
+                                        HStack {
+                                            Text(label)
+                                                .font(.caption)
+                                                .foregroundColor(adaptiveOnBackground(foreground: .white, background: color))
+                                            Spacer()
+                                            Text(color.toHex(true))
+                                                .font(.caption2)
+                                                .foregroundColor(adaptiveOnBackground(foreground: .white, background: color).opacity(0.85))
+                                        }
+                                        .padding(.horizontal, 8)
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 6)
+                                            .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                                    )
+                            }
+                        }
+                    }
                     HStack {
                         Text("透明度")
                         Slider(value: $store.settings.windowOpacity, in: 0.4...1.0, step: 0.01)
