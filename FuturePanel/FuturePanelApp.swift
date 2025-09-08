@@ -54,13 +54,15 @@ extension View {
 
 // Transparent draggable area to move window (for borderless windows)
 struct DraggableAreaView: NSViewRepresentable {
+    final class DragView: NSView {
+        override func mouseDown(with event: NSEvent) {
+            self.window?.performDrag(with: event)
+        }
+    }
     func makeNSView(context: Context) -> NSView {
-        let v = NSView()
+        let v = DragView()
         v.wantsLayer = true
         v.layer?.backgroundColor = NSColor.clear.cgColor
-        DispatchQueue.main.async {
-            v.window?.isMovableByWindowBackground = true
-        }
         return v
     }
     func updateNSView(_ nsView: NSView, context: Context) {}
