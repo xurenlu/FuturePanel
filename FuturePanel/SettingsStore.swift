@@ -15,6 +15,32 @@ struct AppSettings: Codable {
     // Theme color overrides: role(rawValue) -> hex color (e.g., #RRGGBBAA)
     var themeOverrides: [String: String]
 
+    init(
+        servers: [ServerMachine],
+        channels: [ChannelEntry],
+        theme: String,
+        fontSize: Double,
+        fontFamily: String,
+        defaultTemplate: String,
+        windowOpacity: Double,
+        alwaysOnTop: Bool,
+        passThroughWhenNotHovered: Bool,
+        background: String,
+        themeOverrides: [String: String]
+    ) {
+        self.servers = servers
+        self.channels = channels
+        self.theme = theme
+        self.fontSize = fontSize
+        self.fontFamily = fontFamily
+        self.defaultTemplate = defaultTemplate
+        self.windowOpacity = windowOpacity
+        self.alwaysOnTop = alwaysOnTop
+        self.passThroughWhenNotHovered = passThroughWhenNotHovered
+        self.background = background
+        self.themeOverrides = themeOverrides
+    }
+
     static let `default` = AppSettings(
         servers: [ServerMachine(name: "Local Dev", baseURL: URL(string: "http://localhost:8080")!, enabled: true)],
         channels: [ChannelEntry(path: "/events/app1", enabled: true)],
