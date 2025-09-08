@@ -9,6 +9,7 @@ import SwiftUI
 #if os(macOS)
 import AppKit
 #endif
+import Combine
 // import SwiftData
 
 struct DemoConfig {
@@ -37,32 +38,43 @@ struct ContentView: View {
             ZStack {
                 let bgPreset = BackgroundPreset(rawValue: settingsStore.settings.background) ?? .graphiteBlack
                 bgPreset.color
-                List(filteredMessages()) { msg in
-                VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        let pal = ThemePalette.palette(for: theme)
-                        Text("[\(msg.channel)]").foregroundColor(pal.colors[.second]!)
-                        Text(msg.timeString).foregroundColor(pal.colors[.normal]!)
-                        Spacer()
-                        Text(String(msg.id.suffix(6))).foregroundColor(pal.colors[.debug]!)
+                ScrollViewReader { proxy in
+                    List(filteredMessages()) { msg in
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            let pal = ThemePalette.palette(for: theme)
+                            Text("[\(msg.channel)]").foregroundColor(pal.colors[.second]!)
+                            Text(msg.timeString).foregroundColor(pal.colors[.normal]!)
+                            Spacer()
+                            Text(String(msg.id.suffix(6))).foregroundColor(pal.colors[.debug]!)
+                        }
+                        // Render using default DSL template
+                        let line = TemplateEngine.render(
+                            template: settingsStore.settings.defaultTemplate,
+                            jsonString: msg.raw,
+                            metaTimeString: msg.timeString,
+                            id: msg.id
+                        )
+                        highlightedText(line)
+                            .font(.custom(settingsStore.settings.fontFamily, size: settingsStore.settings.fontSize))
+                            .foregroundColor(ThemePalette.palette(for: theme).colors[.primary]!)
+                            .textSelection(.enabled)
                     }
-                    // Render using default DSL template
-                    let line = TemplateEngine.render(
-                        template: settingsStore.settings.defaultTemplate,
-                        jsonString: msg.raw,
-                        metaTimeString: msg.timeString,
-                        id: msg.id
-                    )
-                    highlightedText(line)
-                        .font(.custom(settingsStore.settings.fontFamily, size: settingsStore.settings.fontSize))
-                        .foregroundColor(ThemePalette.palette(for: theme).colors[.primary]!)
-                        .textSelection(.enabled)
+                    .listRowSeparator(.hidden)
+                    .id(msg.id)
+                    }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .background(Color.clear)
+                    .onReceive(NotificationCenter.default.publisher(for: .logAggregatorNewMessage)) { _ in
+                        let items = filteredMessages()
+                        if let last = items.last {
+                            DispatchQueue.main.async {
+                                withAnimation { proxy.scrollTo(last.id, anchor: .bottom) }
+                            }
+                        }
+                    }
                 }
-                .listRowSeparator(.hidden)
-                }
-                .listStyle(.plain)
-                .scrollContentBackground(.hidden)
-                .background(Color.clear)
             }
             // Draggable transparent area at the very top
             .overlay(alignment: .topLeading) {
@@ -86,8 +98,8 @@ struct ContentView: View {
             .overlay(alignment: .topTrailing) {
                 Image(systemName: "xmark.circle.fill")
                     .foregroundColor(.primary)
-                    .padding(6)
-                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.75))
+                    .padding(3)
+                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.28))
                     .clipShape(Circle())
                     .shadow(color: Color.black.opacity(0.6), radius: 4, x: 0, y: 2)
                     .padding(.top, 6)
