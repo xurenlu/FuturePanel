@@ -35,6 +35,8 @@ struct ContentView: View {
             let topInset = max(0, settingsStore.settings.fontSize * 2 + 24)
             let theme = ThemeName(rawValue: settingsStore.settings.theme) ?? .oneDark
             ZStack {
+                let bgPreset = BackgroundPreset(rawValue: settingsStore.settings.background) ?? .graphiteBlack
+                bgPreset.color
                 List(filteredMessages()) { msg in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {

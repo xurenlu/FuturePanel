@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/hmac"
 	"crypto/sha256"
@@ -21,34 +22,64 @@ import (
 
 type Hub struct {
 	mu      sync.RWMutex
-	clients map[*websocket.Conn]struct{}
+	clients map[*websocket.Conn]*client
+	in      chan []byte
 }
 
 func NewHub() *Hub {
-	return &Hub{clients: make(map[*websocket.Conn]struct{})}
+	return &Hub{clients: make(map[*websocket.Conn]*client), in: make(chan []byte, 1024)}
+}
+
+type client struct {
+	conn *websocket.Conn
+	send chan []byte
 }
 
 func (h *Hub) Add(conn *websocket.Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	h.clients[conn] = struct{}{}
+	c := &client{conn: conn, send: make(chan []byte, 256)}
+	h.clients[conn] = c
+	go h.writePump(c)
 }
 
 func (h *Hub) Remove(conn *websocket.Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
-	delete(h.clients, conn)
+	if c, ok := h.clients[conn]; ok {
+		delete(h.clients, conn)
+		close(c.send)
+	}
 }
 
-func (h *Hub) Broadcast(ctx context.Context, msg []byte) {
-	h.mu.RLock()
-	conns := make([]*websocket.Conn, 0, len(h.clients))
-	for c := range h.clients {
-		conns = append(conns, c)
+func (h *Hub) Broadcast(_ context.Context, msg []byte) {
+	// enqueue into hub queue; drop if full to preserve latency
+	select {
+	case h.in <- msg:
+	default:
 	}
-	h.mu.RUnlock()
-	for _, c := range conns {
-		_ = c.Write(ctx, websocket.MessageText, msg)
+}
+
+func (h *Hub) writePump(c *client) {
+	for msg := range c.send {
+		// decouple from request context, with short timeout to avoid head-of-line blocking
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		_ = c.conn.Write(ctx, websocket.MessageText, msg)
+		cancel()
+	}
+}
+
+func (h *Hub) run() {
+	for msg := range h.in {
+		h.mu.RLock()
+		for _, c := range h.clients {
+			select {
+			case c.send <- msg:
+			default:
+				// drop per slow client to keep overall latency low
+			}
+		}
+		h.mu.RUnlock()
 	}
 }
 
@@ -58,6 +89,8 @@ type Server struct {
 	key    []byte
 	nodeID string
 	keyVer int
+	peers  []string
+	httpc  *http.Client
 }
 
 func NewServer() *Server {
@@ -69,7 +102,24 @@ func NewServer() *Server {
 	if node == "" {
 		node = "node-local"
 	}
-	return &Server{hubs: make(map[string]*Hub), key: key, nodeID: node, keyVer: 1}
+	var peers []string
+	if v := os.Getenv("PEERS"); v != "" {
+		parts := strings.Split(v, ",")
+		for _, p := range parts {
+			p = strings.TrimSpace(p)
+			if p != "" {
+				peers = append(peers, p)
+			}
+		}
+	}
+	return &Server{
+		hubs:   make(map[string]*Hub),
+		key:    key,
+		nodeID: node,
+		keyVer: 1,
+		peers:  peers,
+		httpc:  &http.Client{Timeout: 2 * time.Second},
+	}
 }
 
 func (s *Server) hubFor(channel string) *Hub {
@@ -78,6 +128,7 @@ func (s *Server) hubFor(channel string) *Hub {
 	h, ok := s.hubs[channel]
 	if !ok {
 		h = NewHub()
+		go h.run()
 		s.hubs[channel] = h
 	}
 	return h
@@ -136,13 +187,22 @@ func (s *Server) anyChannel(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "invalid json", http.StatusBadRequest)
 			return
 		}
-		envelope, err := s.injectMeta(channel, raw)
-		if err != nil {
-			http.Error(w, "envelope error", http.StatusInternalServerError)
-			return
+		var tmp map[string]json.RawMessage
+		_ = json.Unmarshal(raw, &tmp)
+		envelope := raw
+		if _, ok := tmp["_meta"]; !ok {
+			var err error
+			envelope, err = s.injectMeta(channel, raw)
+			if err != nil {
+				http.Error(w, "envelope error", http.StatusInternalServerError)
+				return
+			}
 		}
 		hub := s.hubFor(channel)
 		hub.Broadcast(r.Context(), envelope)
+		if r.Header.Get("X-LogHUD-Origin") == "" {
+			go s.forwardToPeers(channel, envelope)
+		}
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusAccepted)
 		_, _ = w.Write([]byte(`{"ok":true}`))
@@ -180,6 +240,25 @@ func (s *Server) injectMeta(channel string, raw json.RawMessage) ([]byte, error)
 	meta["hmac"] = mac
 	payload["_meta"] = meta
 	return json.Marshal(payload)
+}
+
+func (s *Server) forwardToPeers(channel string, envelope []byte) {
+	if len(s.peers) == 0 {
+		return
+	}
+	for _, base := range s.peers {
+		url := strings.TrimRight(base, "/") + channel
+		req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(envelope))
+		if err != nil {
+			continue
+		}
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("X-LogHUD-Origin", s.nodeID)
+		resp, err := s.httpc.Do(req)
+		if err == nil && resp != nil {
+			_ = resp.Body.Close()
+		}
+	}
 }
 
 func main() {

@@ -10,11 +10,8 @@ struct AppSettings: Codable {
     var windowOpacity: Double
     var alwaysOnTop: Bool
     var passThroughWhenNotHovered: Bool
-    // Background customization
-    var backgroundColorHex: String
-    var backgroundImagePath: String
-    var backgroundImageOpacity: Double
-    var backgroundImageMode: String // cover | fit | tile
+    // Background preset
+    var background: String // BackgroundPreset rawValue
 
     static let `default` = AppSettings(
         servers: [ServerMachine(name: "Local Dev", baseURL: URL(string: "http://localhost:8080")!, enabled: true)],
@@ -26,10 +23,7 @@ struct AppSettings: Codable {
         windowOpacity: 0.88,
         alwaysOnTop: true,
         passThroughWhenNotHovered: true,
-        backgroundColorHex: "#101012CC",
-        backgroundImagePath: "",
-        backgroundImageOpacity: 0.30,
-        backgroundImageMode: "cover"
+        background: BackgroundPreset.graphiteBlack.rawValue
     )
 }
 

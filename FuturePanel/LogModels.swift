@@ -73,6 +73,11 @@ final class LogAggregator: ObservableObject {
     private let queue = DispatchQueue(label: "LogAggregator.queue")
     private let maxEntries: Int = 100_000
     private let ttlNs: Int64 = 10 * 60 * 1_000_000_000 // 10 minutes
+    private static let timeFormatter: DateFormatter = {
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return df
+    }()
 
     func add(rawString: String) {
         guard let data = rawString.data(using: .utf8) else { return }
@@ -90,9 +95,7 @@ final class LogAggregator: ObservableObject {
         let timeString: String = {
             let seconds = TimeInterval(Double(unixNs) / 1_000_000_000.0)
             let date = Date(timeIntervalSince1970: seconds)
-            let df = DateFormatter()
-            df.dateFormat = "yyyy-MM-dd HH:mm:ss"
-            return df.string(from: date)
+            return LogAggregator.timeFormatter.string(from: date)
         }()
 
         queue.async { [weak self] in
@@ -106,16 +109,13 @@ final class LogAggregator: ObservableObject {
                 self.seen = self.seen.filter { $0.value >= cutoff }
             }
             let item = LogMessage(id: id, unixNs: unixNs, channel: channel, raw: rawString, timeString: timeString)
-            // insert ordered by unixNs (ascending)
-            var newMessages = self.messages
-            let insertIndex = newMessages.binarySearch { $0.unixNs < item.unixNs }
-            newMessages.insert(item, at: insertIndex)
-            // bound memory for messages as well
-            if newMessages.count > 50_000 {
-                newMessages.removeFirst(newMessages.count - 50_000)
-            }
+            // insert ordered by unixNs (ascending) directly on main thread to avoid copying the whole array
             DispatchQueue.main.async {
-                self.messages = newMessages
+                let insertIndex = self.messages.binarySearch { $0.unixNs < item.unixNs }
+                self.messages.insert(item, at: insertIndex)
+                if self.messages.count > 50_000 {
+                    self.messages.removeFirst(self.messages.count - 50_000)
+                }
                 NotificationCenter.default.post(name: .logAggregatorNewMessage, object: nil)
             }
         }

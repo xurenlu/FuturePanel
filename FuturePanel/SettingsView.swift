@@ -6,16 +6,17 @@ import AppKit
 struct SettingsView: View {
     @ObservedObject var store: SettingsStore
     @State private var selection: Int = 0
+    @State private var sidebarWidth: CGFloat = 200
 
     var body: some View {
         HStack(spacing: 0) {
-            // Sidebar (controls selection)
+            // Sidebar (controls selection) - resizable width
             List {
                 SidebarRow(title: "数据来源", systemImage: "tray.full", index: 0, selection: $selection)
                 SidebarRow(title: "DSL 模板", systemImage: "chevron.left.forwardslash.chevron.right", index: 1, selection: $selection)
                 SidebarRow(title: "显示", systemImage: "textformat.size", index: 2, selection: $selection)
             }
-            .frame(minWidth: 180)
+            .frame(minWidth: 160, idealWidth: sidebarWidth, maxWidth: 320)
             .listStyle(.sidebar)
 
             Divider()
@@ -109,7 +110,7 @@ struct SettingsView: View {
                         }
                     }
                 } else if selection == 2 {
-                    // 显示：主题 + 字体 + 预览
+                    // 显示：背景 + 主题 + 字体 + 预览
                     DisplaySettingsView(store: store)
                 } else {
                     EmptyView()
@@ -117,6 +118,17 @@ struct SettingsView: View {
             }
         }
         .frame(minWidth: 860, minHeight: 560)
+        .overlay(alignment: .leading) {
+            // draggable handle to resize sidebar
+            Rectangle()
+                .fill(Color.clear)
+                .frame(width: 6)
+                .gesture(DragGesture()
+                    .onChanged { v in
+                        sidebarWidth = max(160, min(320, sidebarWidth + v.translation.width))
+                    }
+                )
+        }
         .onDisappear { store.save() }
     }
 }
@@ -203,12 +215,28 @@ struct DisplaySettingsView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             Form {
-                Section(header: Text("主题与透明度").font(.headline)) {
-                    Picker("Theme", selection: Binding(
+                Section(header: Text("背景与主题").font(.headline)) {
+                    Picker("背景色", selection: Binding(
+                        get: { BackgroundPreset(rawValue: store.settings.background) ?? .graphiteBlack },
+                        set: { store.settings.background = $0.rawValue
+                            // auto-adjust theme if not in recommendations
+                            let recs = BackgroundRecommendations.recommendedThemes(for: $0)
+                            if !recs.contains(ThemeName(rawValue: store.settings.theme) ?? .oneDark) {
+                                store.settings.theme = recs.first?.rawValue ?? ThemeName.oneDark.rawValue
+                            }
+                        }
+                    )) {
+                        ForEach(BackgroundPreset.allCases) { b in
+                            Text(b.rawValue).tag(b)
+                        }
+                    }
+                    Picker("主题", selection: Binding(
                         get: { ThemeName(rawValue: store.settings.theme) ?? .oneDark },
                         set: { store.settings.theme = $0.rawValue }
                     )) {
-                        ForEach(ThemeName.allCases) { t in
+                        let bg = BackgroundPreset(rawValue: store.settings.background) ?? .graphiteBlack
+                        let recs = BackgroundRecommendations.recommendedThemes(for: bg)
+                        ForEach(recs) { t in
                             Text(t.rawValue).tag(t)
                         }
                     }
@@ -233,10 +261,20 @@ struct DisplaySettingsView: View {
             }
 
             GroupBox("示例预览") {
-                Text(previewLine)
-                    .font(.custom(store.settings.fontFamily, size: store.settings.fontSize))
-                    .foregroundColor(palette.colors[.primary]!)
-                    .padding(8)
+                ZStack(alignment: .topLeading) {
+                    let bg = BackgroundPreset(rawValue: store.settings.background) ?? .graphiteBlack
+                    bg.color
+                    Text(previewLine)
+                        .font(.custom(store.settings.fontFamily, size: store.settings.fontSize))
+                        .foregroundColor(
+                            adaptiveOnBackground(
+                                foreground: palette.colors[.primary]!,
+                                background: bg.color
+                            )
+                        )
+                        .padding(8)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
         }
         .padding()

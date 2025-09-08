@@ -274,4 +274,45 @@ func adaptiveOnBackground(foreground: Color, background: Color) -> Color {
     #endif
 }
 
+enum BackgroundPreset: String, CaseIterable, Identifiable {
+    case graphiteBlack = "Graphite Black"      // #101012CC
+    case midnightBlue = "Midnight Blue"        // #0B1533CC
+    case deepGreen = "Deep Forest Green"       // #0E1A14CC
+    case cocoaBrown = "Cocoa Brown"            // #2A1708CC
+    case charcoalGray = "Charcoal Gray"        // #1E1F22CC
+    case wineRed = "Wine Red"                  // #2B0E13CC
+    case steelTeal = "Steel Teal"              // #12343CCC
+    case slatePurple = "Slate Purple"          // #1B1233CC
+
+    var id: String { rawValue }
+
+    var color: Color {
+        switch self {
+        case .graphiteBlack: return Color(hex: "#101012CC")!
+        case .midnightBlue: return Color(hex: "#0B1533CC")!
+        case .deepGreen: return Color(hex: "#0E1A14CC")!
+        case .cocoaBrown: return Color(hex: "#2A1708CC")!
+        case .charcoalGray: return Color(hex: "#1E1F22CC")!
+        case .wineRed: return Color(hex: "#2B0E13CC")!
+        case .steelTeal: return Color(hex: "#12343CCC")!
+        case .slatePurple: return Color(hex: "#1B1233CC")!
+        }
+    }
+}
+
+struct BackgroundRecommendations {
+    static func recommendedThemes(for bg: BackgroundPreset) -> [ThemeName] {
+        switch bg {
+        case .graphiteBlack: return [.oneDark, .dracula, .nord, .nightOwl]
+        case .midnightBlue: return [.materialOcean, .nightOwl, .nord, .cobalt2]
+        case .deepGreen: return [.gruvboxDark, .nord, .oneDark, .forestDarkGreen]
+        case .cocoaBrown: return [.oneDark, .tomorrowNight, .cocoaChocolate, .gruvboxDark]
+        case .charcoalGray: return [.tomorrowNight, .oneDark, .dracula, .monokai]
+        case .wineRed: return [.dracula, .tomorrowNight, .oneDark, .emberRed]
+        case .steelTeal: return [.materialOcean, .nord, .nightOwl, .cobalt2]
+        case .slatePurple: return [.dracula, .nightOwl, .materialOcean, .oneDark]
+        }
+    }
+}
+
 
