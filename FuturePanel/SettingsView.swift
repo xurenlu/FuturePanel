@@ -66,6 +66,16 @@ struct SettingsView: View {
                             TextEditor(text: $store.settings.defaultTemplate)
                                 .font(.system(.body, design: .monospaced))
                                 .frame(minHeight: 220)
+                            GroupBox("实时预览（使用当前模板）") {
+                                Text(livePreview)
+                                    .font(.custom(store.settings.fontFamily, size: store.settings.fontSize))
+                                    .padding(6)
+                            }
+                            GroupBox("示例预览（固定示例 DSL）") {
+                                Text(examplePreview)
+                                    .font(.custom(store.settings.fontFamily, size: store.settings.fontSize))
+                                    .padding(6)
+                            }
                         }
                         Section(header: Text("DSL 参考（主要变量与函数）").font(.headline)) {
                             ScrollView {
@@ -287,6 +297,36 @@ struct DisplaySettingsView: View {
         df.dateFormat = "yyyy-MM-dd HH:mm:ss"
         return TemplateEngine.render(
             template: store.settings.defaultTemplate,
+            jsonString: sampleJSON,
+            metaTimeString: df.string(from: now),
+            id: UUID().uuidString
+        )
+    }
+}
+
+private extension SettingsView {
+    var livePreview: String {
+        let sampleJSON = "{\"title\":\"Hello\",\"message\":\"This is a demo line for preview\",\"level\":\"info\"}"
+        let now = Date()
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return TemplateEngine.render(
+            template: store.settings.defaultTemplate,
+            jsonString: sampleJSON,
+            metaTimeString: df.string(from: now),
+            id: UUID().uuidString
+        )
+    }
+
+    var examplePreview: String {
+        // [ primary($TIME) ] second("title") warn("warn") success("succ") gray($LAST6)
+        let dsl = "[ primary($TIME) ] second(\"title\") warn(\"warn\") success(\"succ\") gray($LAST6)"
+        let sampleJSON = "{\"title\":\"Hello\",\"message\":\"...\",\"level\":\"info\"}"
+        let now = Date()
+        let df = DateFormatter()
+        df.dateFormat = "yyyy-MM-dd HH:mm:ss"
+        return TemplateEngine.render(
+            template: dsl,
             jsonString: sampleJSON,
             metaTimeString: df.string(from: now),
             id: UUID().uuidString

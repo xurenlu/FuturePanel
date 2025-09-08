@@ -61,7 +61,7 @@ struct TemplateEngine {
 
     private static func stripStyleFunctions(_ text: String) -> String {
         // Replace occurrences like primary(x) or error(max(...)) with the inner text, shallowly.
-        let funcs = ["primary", "second", "warning", "error", "notice", "debug", "normal"]
+        let funcs = ["primary", "second", "warning", "warn", "error", "notice", "success", "debug", "normal", "gray"]
         var out = text
         for f in funcs {
             let pattern = "\\b" + f + "\\(([^()]*)\\)"
@@ -74,7 +74,9 @@ struct TemplateEngine {
                     var newOut = out
                     for m in matches.reversed() {
                         if m.numberOfRanges >= 2, let inner = Range(m.range(at: 1), in: out), let full = Range(m.range(at: 0), in: out) {
-                            newOut.replaceSubrange(full, with: String(out[inner]))
+                            let innerText = String(out[inner])
+                            let unquoted = stripOuterQuotesIfPresent(innerText)
+                            newOut.replaceSubrange(full, with: unquoted)
                         }
                     }
                     out = newOut
@@ -129,6 +131,13 @@ struct TemplateEngine {
         if let full = Range(m.range(at: 0), in: input) { out.replaceSubrange(full, with: val) }
         return out
     }
+}
+
+private func stripOuterQuotesIfPresent(_ s: String) -> String {
+    if s.count >= 2, s.first == "\"", s.last == "\"" {
+        return String(s.dropFirst().dropLast())
+    }
+    return s
 }
 
 
