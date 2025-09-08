@@ -32,21 +32,10 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            HStack(spacing: 8) {
-                Text("FuturePanel")
-                    .font(.headline)
-                Spacer()
-                Button {
-                    #if os(macOS)
-                    NSApp.hide(nil)
-                    #endif
-                } label: { Image(systemName: "xmark.circle.fill") }
-            }
-            .padding(8)
-            .background(.clear)
-
+            let topInset = max(0, settingsStore.settings.fontSize * 2 + 24)
             let theme = ThemeName(rawValue: settingsStore.settings.theme) ?? .oneDark
-            List(filteredMessages()) { msg in
+            ZStack {
+                List(filteredMessages()) { msg in
                 VStack(alignment: .leading, spacing: 4) {
                     HStack {
                         let pal = ThemePalette.palette(for: theme)
@@ -68,28 +57,58 @@ struct ContentView: View {
                         .textSelection(.enabled)
                 }
                 .listRowSeparator(.hidden)
+                }
+                .listStyle(.plain)
+                .scrollContentBackground(.hidden)
+                .background(Color.clear)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
-            .background(Color.clear)
+            // Draggable transparent area at the very top
+            .overlay(alignment: .topLeading) {
+                DraggableAreaView()
+                    .frame(height: topInset)
+                    .frame(maxWidth: .infinity)
+                    .background(Color.clear)
+                    .zIndex(7)
+            }
+            // Close icon pinned to top-right
             .overlay(alignment: .topTrailing) {
+                Image(systemName: "xmark.circle.fill")
+                    .foregroundColor(.primary)
+                    .padding(6)
+                    .background(Color(nsColor: .windowBackgroundColor).opacity(0.75))
+                    .clipShape(Circle())
+                    .shadow(color: Color.black.opacity(0.6), radius: 4, x: 0, y: 2)
+                    .padding(.top, 6)
+                    .padding(.trailing, 6)
+                    .onTapGesture {
+                        #if os(macOS)
+                        NSApp.hide(nil)
+                        #endif
+                    }
+                    .zIndex(8)
+            }
+            // Keyword toolbar pinned to bottom-left
+            .overlay(alignment: .bottomLeading) {
                 if hoverToolbar {
                     HStack(spacing: 8) {
                         TextField("关键字…", text: $keyword)
-                            .textFieldStyle(.roundedBorder)
+                            .textFieldStyle(.plain)
                             .padding(.vertical, 4)
                             .padding(.horizontal, 6)
-                            .background(Color(nsColor: .textBackgroundColor))
+                            .background(Color.clear)
                             .cornerRadius(6)
                             .frame(width: 260)
                         Toggle("过滤模式", isOn: $filterMode)
-                        Button { keyword = "" } label: { Image(systemName: "xmark.circle") }
+                        Image(systemName: "xmark.circle")
+                            .onTapGesture { keyword = "" }
                     }
                     .padding(10)
                     .background(Color(nsColor: .windowBackgroundColor))
                     .cornerRadius(10)
                     .shadow(color: Color.black.opacity(0.25), radius: 8, x: 0, y: 4)
-                    .padding(10)
+                    .padding(.leading, 10)
+                    .padding(.bottom, 10)
+                    .zIndex(8)
                 }
             }
         }
@@ -131,7 +150,7 @@ struct ContentView: View {
 
     @ViewBuilder
     private func highlightedText(_ line: String) -> some View {
-        if !keyword.isEmpty && !filterMode {
+        if !keyword.isEmpty {
             Highlighter.highlight(text: line, keyword: keyword)
         } else {
             Text(line)

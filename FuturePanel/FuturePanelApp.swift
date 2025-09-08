@@ -52,6 +52,19 @@ extension View {
     }
 }
 
+// Transparent draggable area to move window (for borderless windows)
+struct DraggableAreaView: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSView {
+        let v = NSView()
+        v.wantsLayer = true
+        v.layer?.backgroundColor = NSColor.clear.cgColor
+        DispatchQueue.main.async {
+            v.window?.isMovableByWindowBackground = true
+        }
+        return v
+    }
+    func updateNSView(_ nsView: NSView, context: Context) {}
+}
 struct SettingsWindowLevelHelper: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()

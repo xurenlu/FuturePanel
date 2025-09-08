@@ -1,4 +1,7 @@
 import SwiftUI
+#if os(macOS)
+import AppKit
+#endif
 
 enum ThemeName: String, CaseIterable, Identifiable {
     case oneDark = "One Dark"
@@ -196,6 +199,79 @@ struct ThemePalette {
             ])
         }
     }
+}
+
+// MARK: - Color Hex Helpers
+extension Color {
+    init?(hex: String) {
+        var s = hex.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        if s.hasPrefix("#") { s.removeFirst() }
+        var rgba: UInt64 = 0
+        guard Scanner(string: s).scanHexInt64(&rgba) else { return nil }
+        switch s.count {
+        case 8: // RRGGBBAA
+            let r = Double((rgba & 0xFF000000) >> 24) / 255.0
+            let g = Double((rgba & 0x00FF0000) >> 16) / 255.0
+            let b = Double((rgba & 0x0000FF00) >> 8) / 255.0
+            let a = Double(rgba & 0x000000FF) / 255.0
+            self = Color(red: r, green: g, blue: b).opacity(a)
+        case 6: // RRGGBB
+            let r = Double((rgba & 0xFF0000) >> 16) / 255.0
+            let g = Double((rgba & 0x00FF00) >> 8) / 255.0
+            let b = Double(rgba & 0x0000FF) / 255.0
+            self = Color(red: r, green: g, blue: b)
+        default:
+            return nil
+        }
+    }
+
+    func toHex(alpha: Bool = false) -> String {
+        let ui = NSColor(self)
+        let rgb = ui.usingColorSpace(.deviceRGB) ?? ui
+        let r = Int((rgb.redComponent * 255.0).rounded())
+        let g = Int((rgb.greenComponent * 255.0).rounded())
+        let b = Int((rgb.blueComponent * 255.0).rounded())
+        let a = Int((rgb.alphaComponent * 255.0).rounded())
+        if alpha { return String(format: "#%02X%02X%02X%02X", r, g, b, a) }
+        return String(format: "#%02X%02X%02X", r, g, b)
+    }
+}
+
+// MARK: - Contrast helpers
+extension NSColor {
+    var relativeLuminance: CGFloat {
+        let rgb = self.usingColorSpace(.deviceRGB) ?? self
+        func channel(_ c: CGFloat) -> CGFloat {
+            return (c <= 0.03928) ? (c/12.92) : pow((c+0.055)/1.055, 2.4)
+        }
+        let r = channel(rgb.redComponent)
+        let g = channel(rgb.greenComponent)
+        let b = channel(rgb.blueComponent)
+        return 0.2126*r + 0.7152*g + 0.0722*b
+    }
+}
+
+extension Color {
+    #if os(macOS)
+    func asNSColor() -> NSColor { NSColor(self) }
+    #endif
+}
+
+func adaptiveOnBackground(foreground: Color, background: Color) -> Color {
+    #if os(macOS)
+    let fg = foreground.asNSColor()
+    let bg = background.asNSColor()
+    let l1 = fg.relativeLuminance
+    let l2 = bg.relativeLuminance
+    let lighter = max(l1, l2) + 0.05
+    let darker  = min(l1, l2) + 0.05
+    let ratio = lighter / darker
+    if ratio >= 4.5 { return foreground }
+    // choose black or white based on background luminance
+    return (l2 > 0.5) ? Color.black : Color.white
+    #else
+    return foreground
+    #endif
 }
 
 

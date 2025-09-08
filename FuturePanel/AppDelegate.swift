@@ -9,7 +9,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private var unreadCount: Int = 0 {
         didSet { updateStatusTitle() }
     }
-    private var settingsWindow: NSWindow?
+    var settingsWindow: NSWindow?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Status bar item
@@ -17,7 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if let btn = item.button {
             btn.image = NSImage(systemSymbolName: "rectangle.and.text.magnifyingglass", accessibilityDescription: "FuturePanel")
             btn.image?.isTemplate = true
-            btn.title = "LogHUD"
+            btn.title = ""
         }
         let menu = NSMenu()
         let openItem = NSMenuItem(title: "打开面板", action: #selector(openMain), keyEquivalent: "")
