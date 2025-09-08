@@ -64,11 +64,21 @@ struct ContentView: View {
             }
             // Draggable transparent area at the very top
             .overlay(alignment: .topLeading) {
-                DraggableAreaView()
-                    .frame(height: topInset)
-                    .frame(maxWidth: .infinity)
-                    .background(Color.clear)
-                    .zIndex(7)
+                ZStack(alignment: .top) {
+                    // subtle visual affordance for draggable area
+                    Color(nsColor: .windowBackgroundColor)
+                        .opacity(0.12)
+                    DraggableAreaView()
+                        .background(Color.clear)
+                }
+                .frame(height: topInset)
+                .frame(maxWidth: .infinity)
+                .overlay(alignment: .bottom) {
+                    Rectangle()
+                        .fill(Color.white.opacity(0.07))
+                        .frame(height: 1)
+                }
+                .zIndex(7)
             }
             // Close icon pinned to top-right
             .overlay(alignment: .topTrailing) {
