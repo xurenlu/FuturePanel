@@ -283,6 +283,12 @@ enum BackgroundPreset: String, CaseIterable, Identifiable {
     case wineRed = "Wine Red"                  // #2B0E13CC
     case steelTeal = "Steel Teal"              // #12343CCC
     case slatePurple = "Slate Purple"          // #1B1233CC
+    // New black-heavy presets
+    case obsidianBlack = "Obsidian Black"      // #0A0B0DCC
+    case jetBlack = "Jet Black"                // #0B0B0BCC
+    case carbonBlack = "Carbon Black"          // #0D0F12CC
+    case trueBlack = "True Black"              // #000000CC
+    case slateBlack = "Slate Black"            // #121416CC
 
     var id: String { rawValue }
 
@@ -296,6 +302,11 @@ enum BackgroundPreset: String, CaseIterable, Identifiable {
         case .wineRed: return Color(hex: "#2B0E13CC")!
         case .steelTeal: return Color(hex: "#12343CCC")!
         case .slatePurple: return Color(hex: "#1B1233CC")!
+        case .obsidianBlack: return Color(hex: "#0A0B0DCC")!
+        case .jetBlack: return Color(hex: "#0B0B0BCC")!
+        case .carbonBlack: return Color(hex: "#0D0F12CC")!
+        case .trueBlack: return Color(hex: "#000000CC")!
+        case .slateBlack: return Color(hex: "#121416CC")!
         }
     }
 }
@@ -311,6 +322,11 @@ struct BackgroundRecommendations {
         case .wineRed: return [.dracula, .tomorrowNight, .oneDark, .emberRed]
         case .steelTeal: return [.materialOcean, .nord, .nightOwl, .cobalt2]
         case .slatePurple: return [.dracula, .nightOwl, .materialOcean, .oneDark]
+        case .obsidianBlack: return [.oneDark, .dracula, .tomorrowNight, .nightOwl]
+        case .jetBlack: return [.oneDark, .dracula, .monokai, .tomorrowNight]
+        case .carbonBlack: return [.oneDark, .dracula, .nightOwl, .cobalt2]
+        case .trueBlack: return [.oneDark, .dracula, .tomorrowNight, .monokai]
+        case .slateBlack: return [.oneDark, .nord, .nightOwl, .dracula]
         }
     }
 }
