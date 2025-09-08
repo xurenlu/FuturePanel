@@ -254,7 +254,14 @@ struct DisplaySettingsView: View {
                         Text("样式色板")
                             .font(.subheadline)
                             .foregroundColor(.secondary)
-                        PaletteGrid(palette: palette)
+                        PaletteGrid(palette: ThemePalette.palette(for: theme, overrides: store.settings.themeOverrides), onPick: { role, newColor in
+                            // save to overrides
+                            if let hex = newColor.toHex(alpha: true) as String? {
+                                var ov = store.settings.themeOverrides
+                                ov[role.rawValue] = hex
+                                store.settings.themeOverrides = ov
+                            }
+                        })
                     }
                     HStack {
                         Text("透明度")
@@ -343,6 +350,7 @@ private extension SettingsView {
 // MARK: - Palette Grid Subviews
 private struct PaletteGrid: View {
     let palette: ThemePalette
+    var onPick: ((SemanticRole, Color) -> Void)? = nil
     private let roles: [(SemanticRole, String)] = [
         (.primary, "primary"),
         (.second, "second"),
@@ -355,8 +363,17 @@ private struct PaletteGrid: View {
     var body: some View {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 12)], spacing: 12) {
             ForEach(roles, id: \.1) { item in
-                let color = palette.colors[item.0] ?? Color.white
-                ColorSwatch(color: color, label: item.1)
+                let role = item.0
+                let color = palette.colors[role] ?? Color.white
+                ColorSwatch(color: color, label: item.1) {
+                    // open a tiny popover with ColorPicker
+                }
+                .contextMenu {
+                    ColorPicker("选择颜色", selection: Binding(
+                        get: { color },
+                        set: { c in onPick?(role, c) }
+                    ))
+                }
             }
         }
     }
@@ -365,6 +382,7 @@ private struct PaletteGrid: View {
 private struct ColorSwatch: View {
     let color: Color
     let label: String
+    var onTap: (() -> Void)? = nil
     var body: some View {
         RoundedRectangle(cornerRadius: 6)
             .fill(color)
@@ -385,6 +403,7 @@ private struct ColorSwatch: View {
                 RoundedRectangle(cornerRadius: 6)
                     .stroke(Color.white.opacity(0.08), lineWidth: 1)
             )
+            .onTapGesture { onTap?() }
     }
 }
 

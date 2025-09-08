@@ -199,6 +199,30 @@ struct ThemePalette {
             ])
         }
     }
+
+    static func palette(for name: ThemeName, overrides: [String: String]) -> ThemePalette {
+        var base = palette(for: name)
+        var merged = base.colors
+        for (k, v) in overrides {
+            let key = k.lowercased()
+            let role: SemanticRole? = {
+                switch key {
+                case "primary": return .primary
+                case "second", "secondary": return .second
+                case "warning", "warn": return .warning
+                case "error": return .error
+                case "notice", "info", "success": return .notice
+                case "debug": return .debug
+                case "normal", "gray": return .normal
+                default: return nil
+                }
+            }()
+            if let role, let c = Color(hex: v) {
+                merged[role] = c
+            }
+        }
+        return ThemePalette(colors: merged)
+    }
 }
 
 // MARK: - Color Hex Helpers

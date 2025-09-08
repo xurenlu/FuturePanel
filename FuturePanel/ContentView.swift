@@ -42,7 +42,7 @@ struct ContentView: View {
                     List(filteredMessages()) { msg in
                     VStack(alignment: .leading, spacing: 4) {
                         HStack {
-                            let pal = ThemePalette.palette(for: theme)
+                            let pal = ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides)
                             Text("[\(msg.channel)]").foregroundColor(pal.colors[.second]!)
                             Text(msg.timeString).foregroundColor(pal.colors[.normal]!)
                             Spacer()
@@ -55,7 +55,7 @@ struct ContentView: View {
                             metaTimeString: msg.timeString,
                             id: msg.id
                         )
-                        styledText(from: segments, palette: ThemePalette.palette(for: theme), keyword: keyword)
+                        styledText(from: segments, palette: ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides), keyword: keyword)
                             .font(.custom(settingsStore.settings.fontFamily, size: settingsStore.settings.fontSize))
                             .textSelection(.enabled)
                     }
@@ -97,7 +97,7 @@ struct ContentView: View {
             .overlay(alignment: .topTrailing) {
                 Image(systemName: "xmark")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ThemePalette.palette(for: theme).colors[.primary]!)
+                    .foregroundColor(ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides).colors[.primary]!)
                     .padding(.top, 6)
                     .padding(.trailing, 6)
                     .onTapGesture {

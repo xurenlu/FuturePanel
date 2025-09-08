@@ -12,6 +12,8 @@ struct AppSettings: Codable {
     var passThroughWhenNotHovered: Bool
     // Background preset
     var background: String // BackgroundPreset rawValue
+    // Theme color overrides: role(rawValue) -> hex color (e.g., #RRGGBBAA)
+    var themeOverrides: [String: String]
 
     static let `default` = AppSettings(
         servers: [ServerMachine(name: "Local Dev", baseURL: URL(string: "http://localhost:8080")!, enabled: true)],
@@ -23,8 +25,27 @@ struct AppSettings: Codable {
         windowOpacity: 0.88,
         alwaysOnTop: true,
         passThroughWhenNotHovered: true,
-        background: BackgroundPreset.graphiteBlack.rawValue
+        background: BackgroundPreset.graphiteBlack.rawValue,
+        themeOverrides: [:]
     )
+
+    enum CodingKeys: String, CodingKey {
+        case servers, channels, theme, fontSize, fontFamily, defaultTemplate, windowOpacity, alwaysOnTop, passThroughWhenNotHovered, background, themeOverrides
+    }
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        servers = (try? c.decode([ServerMachine].self, forKey: .servers)) ?? AppSettings.default.servers
+        channels = (try? c.decode([ChannelEntry].self, forKey: .channels)) ?? AppSettings.default.channels
+        theme = (try? c.decode(String.self, forKey: .theme)) ?? AppSettings.default.theme
+        fontSize = (try? c.decode(Double.self, forKey: .fontSize)) ?? AppSettings.default.fontSize
+        fontFamily = (try? c.decode(String.self, forKey: .fontFamily)) ?? AppSettings.default.fontFamily
+        defaultTemplate = (try? c.decode(String.self, forKey: .defaultTemplate)) ?? AppSettings.default.defaultTemplate
+        windowOpacity = (try? c.decode(Double.self, forKey: .windowOpacity)) ?? AppSettings.default.windowOpacity
+        alwaysOnTop = (try? c.decode(Bool.self, forKey: .alwaysOnTop)) ?? AppSettings.default.alwaysOnTop
+        passThroughWhenNotHovered = (try? c.decode(Bool.self, forKey: .passThroughWhenNotHovered)) ?? AppSettings.default.passThroughWhenNotHovered
+        background = (try? c.decode(String.self, forKey: .background)) ?? AppSettings.default.background
+        themeOverrides = (try? c.decode([String: String].self, forKey: .themeOverrides)) ?? [:]
+    }
 }
 
 final class SettingsStore: ObservableObject {
