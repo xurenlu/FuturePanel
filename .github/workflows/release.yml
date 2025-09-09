@@ -1,0 +1,197 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '1.*'
+
+env:
+  GO_VERSION: '1.21'
+
+jobs:
+  build:
+    name: Build binaries
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          # Server binaries
+          - name: server
+            path: ./server
+            binary: futurepanel-server
+          # JSLWatcher binaries  
+          - name: jslwatcher
+            path: ./jslwatcher
+            binary: jslwatcher
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: ${{ env.GO_VERSION }}
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Build for multiple platforms
+        run: |
+          cd ${{ matrix.path }}
+          
+          # Create dist directory
+          mkdir -p dist
+          
+          # Build for different platforms
+          platforms=(
+            "linux/amd64"
+            "linux/arm64" 
+            "linux/arm"
+            "darwin/amd64"
+            "darwin/arm64"
+            "windows/amd64"
+          )
+          
+          for platform in "${platforms[@]}"; do
+            os=$(echo $platform | cut -d'/' -f1)
+            arch=$(echo $platform | cut -d'/' -f2)
+            
+            echo "Building for $os/$arch..."
+            
+            # Set binary extension for Windows
+            ext=""
+            if [ "$os" = "windows" ]; then
+              ext=".exe"
+            fi
+            
+            # Build binary
+            CGO_ENABLED=0 GOOS=$os GOARCH=$arch go build \
+              -ldflags="-s -w -X main.version=${{ steps.version.outputs.VERSION }} -X main.commit=${{ github.sha }} -X main.date=$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+              -o dist/${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}${ext} \
+              ./cmd/${{ matrix.name }}
+            
+            # Create archive
+            cd dist
+            if [ "$os" = "windows" ]; then
+              zip ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}.zip ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}${ext}
+              rm ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}${ext}
+            else
+              tar -czf ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}.tar.gz ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}${ext}
+              rm ${{ matrix.binary }}_${{ steps.version.outputs.VERSION }}_${os}_${arch}${ext}
+            fi
+            cd ..
+          done
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}-binaries
+          path: ${{ matrix.path }}/dist/
+
+  create-release:
+    name: Create Release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Display structure of downloaded files
+        run: ls -la ./dist/
+
+      - name: Generate release notes
+        id: release_notes
+        run: |
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_OUTPUT
+          echo "## FuturePanel ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 🚀 新功能" >> $GITHUB_OUTPUT
+          echo "- 完整的日志监控和转发系统" >> $GITHUB_OUTPUT
+          echo "- 支持多种日志格式解析 (nginx, java, php)" >> $GITHUB_OUTPUT
+          echo "- 实时 WebSocket 连接" >> $GITHUB_OUTPUT
+          echo "- systemd 服务集成" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 📦 包含组件" >> $GITHUB_OUTPUT
+          echo "- **futurepanel-server**: Mac 版服务器" >> $GITHUB_OUTPUT
+          echo "- **jslwatcher**: Linux 日志监控服务" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 🛠️ 安装说明" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "#### JSLWatcher (Linux)" >> $GITHUB_OUTPUT
+          echo '```bash' >> $GITHUB_OUTPUT
+          echo "# 一键安装" >> $GITHUB_OUTPUT
+          echo "curl -fsSL https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh | sudo bash" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "# 或手动下载安装" >> $GITHUB_OUTPUT
+          echo "wget https://github.com/rocky/futurepanel/releases/download/${{ steps.version.outputs.VERSION }}/jslwatcher_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo "tar -xzf jslwatcher_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo "sudo mv jslwatcher /usr/local/bin/" >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "#### Server (macOS)" >> $GITHUB_OUTPUT
+          echo '```bash' >> $GITHUB_OUTPUT
+          echo "# 下载 macOS 版本" >> $GITHUB_OUTPUT
+          echo "wget https://github.com/rocky/futurepanel/releases/download/${{ steps.version.outputs.VERSION }}/futurepanel-server_${{ steps.version.outputs.VERSION }}_darwin_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo "tar -xzf futurepanel-server_${{ steps.version.outputs.VERSION }}_darwin_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo '```' >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "### 📚 文档" >> $GITHUB_OUTPUT
+          echo "- [JSLWatcher 使用指南](https://github.com/rocky/futurepanel/tree/main/jslwatcher)" >> $GITHUB_OUTPUT
+          echo "- [配置文件说明](https://github.com/rocky/futurepanel/blob/main/jslwatcher/README.md)" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+          echo "---" >> $GITHUB_OUTPUT
+          echo "**完整变更日志**: https://github.com/rocky/futurepanel/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.version.outputs.VERSION }}
+          name: FuturePanel ${{ steps.version.outputs.VERSION }}
+          body: ${{ steps.release_notes.outputs.RELEASE_NOTES }}
+          draft: false
+          prerelease: false
+          files: |
+            ./dist/**/*.tar.gz
+            ./dist/**/*.zip
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  build-checksums:
+    name: Generate checksums
+    needs: create-release
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: ./dist
+
+      - name: Generate checksums
+        run: |
+          cd ./dist
+          find . -name "*.tar.gz" -o -name "*.zip" | xargs sha256sum > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Upload checksums to release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: ./dist/SHA256SUMS
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

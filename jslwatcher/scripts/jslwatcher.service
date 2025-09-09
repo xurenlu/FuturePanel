@@ -1,0 +1,38 @@
+[Unit]
+Description=JSLWatcher - 日志文件监控和转发服务
+Documentation=https://github.com/rocky/futurepanel/tree/main/jslwatcher
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=jslwatcher
+Group=jslwatcher
+ExecStart=/usr/local/bin/jslwatcher -daemon
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=jslwatcher
+
+# 安全设置
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/etc/jslwatcher /var/log/jslwatcher
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+
+# 资源限制
+LimitNOFILE=65536
+LimitNPROC=4096
+
+# 环境变量
+Environment=HOME=/var/lib/jslwatcher
+WorkingDirectory=/var/lib/jslwatcher
+
+[Install]
+WantedBy=multi-user.target

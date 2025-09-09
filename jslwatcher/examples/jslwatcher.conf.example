@@ -1,0 +1,68 @@
+# JSLWatcher 配置文件示例
+# 配置文件使用 YAML 格式
+
+# 通用配置
+general:
+  log_level: "info"          # 日志级别: debug, info, warn, error
+  buffer_size: 1000          # 事件缓冲区大小
+  retry_count: 3             # 连接重试次数
+  retry_delay: "5s"          # 重试延迟时间
+  max_file_size: "100MB"     # 单个日志文件最大监控大小
+
+# 服务器配置
+servers:
+  - name: "local"                    # 服务器名称
+    url: "ws://localhost:8080/ws"    # WebSocket 连接地址
+    channels:                        # 频道配置
+      - name: "default"              # 频道名称
+        path: "/logs/default"        # 服务器端路径
+      - name: "errors"
+        path: "/logs/errors"
+      - name: "access"
+        path: "/logs/access"
+
+  - name: "remote"
+    url: "ws://192.168.1.100:8080/ws"
+    channels:
+      - name: "system"
+        path: "/logs/system"
+      - name: "app"
+        path: "/logs/application"
+
+# 文件监控配置
+files:
+  # Nginx 访问日志
+  - path: "/var/log/nginx/access.log"
+    format: "nginx-access"           # 日志格式
+    channels: ["access"]             # 发送到的频道
+    servers: ["local", "remote"]     # 发送到的服务器
+
+  # Nginx 错误日志
+  - path: "/var/log/nginx/error.log"
+    format: "nginx-error"
+    channels: ["errors"]
+    servers: ["local"]
+
+  # Java 应用日志
+  - path: "/var/log/myapp/application.log"
+    format: "java-log"
+    channels: ["app"]
+    servers: ["remote"]
+
+  # PHP 错误日志
+  - path: "/var/log/php/error.log"
+    format: "php-error"
+    channels: ["errors"]
+    servers: ["local"]
+
+  # 自定义 JSON Lines 日志
+  - path: "/var/log/custom/app.jsonl"
+    format: "jsonlines"
+    channels: ["default"]
+    servers: ["local"]
+
+  # 系统日志 (使用通用格式)
+  - path: "/var/log/syslog"
+    format: "jsonlines"               # 会尝试解析，失败时作为普通文本
+    channels: ["system"]
+    servers: ["remote"]

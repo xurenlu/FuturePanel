@@ -1,0 +1,9 @@
+{
+  "version": "1.1.0",
+  "builds": {
+    "swift_client": 1,
+    "go_server": 1,
+    "go_jslwatcher": 1
+  },
+  "last_updated": "2024-12-09T15:10:00Z"
+}
