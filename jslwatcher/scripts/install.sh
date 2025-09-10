@@ -13,8 +13,8 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # 配置
-REPO_USER="rocky"
-REPO_NAME="futurepanel"
+REPO_USER="xurenlu"
+REPO_NAME="FuturePanel"
 SERVICE_NAME="jslwatcher"
 INSTALL_DIR="/usr/local/bin"
 CONFIG_DIR="/etc/jslwatcher"
@@ -116,7 +116,7 @@ download_binary() {
     log_step "下载 jslwatcher 二进制文件..."
     
     local binary_name="jslwatcher_${LATEST_VERSION}_linux_${ARCH}.tar.gz"
-    local download_url="https://github.com/$REPO_USER/$REPO_NAME/releases/download/$LATEST_VERSION/$binary_name"
+    local download_url="https://sslcat.com/$REPO_USER/$REPO_NAME/releases/download/$LATEST_VERSION/$binary_name"
     local temp_dir=$(mktemp -d)
     
     log_info "下载地址: $download_url"
@@ -204,7 +204,7 @@ install_systemd_service() {
     cat > $service_file << 'EOF'
 [Unit]
 Description=JSLWatcher - 日志文件监控和转发服务
-Documentation=https://github.com/rocky/futurepanel/tree/main/jslwatcher
+Documentation=https://github.com/xurenlu/FuturePanel/tree/main/jslwatcher
 After=network.target
 Wants=network.target
 
