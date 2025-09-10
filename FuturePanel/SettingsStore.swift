@@ -1,7 +1,6 @@
 import Foundation
 
 struct AppSettings: Codable {
-    var servers: [ServerMachine]
     var channels: [ChannelEntry]
     var theme: String
     var fontSize: Double
@@ -16,7 +15,6 @@ struct AppSettings: Codable {
     var themeOverrides: [String: String]
 
     init(
-        servers: [ServerMachine],
         channels: [ChannelEntry],
         theme: String,
         fontSize: Double,
@@ -28,7 +26,6 @@ struct AppSettings: Codable {
         background: String,
         themeOverrides: [String: String]
     ) {
-        self.servers = servers
         self.channels = channels
         self.theme = theme
         self.fontSize = fontSize
@@ -42,7 +39,6 @@ struct AppSettings: Codable {
     }
 
     static let `default` = AppSettings(
-        servers: [ServerMachine(name: "Local Dev", baseURL: URL(string: "http://localhost:8080")!, enabled: true)],
         channels: [ChannelEntry(path: "/events/app1", enabled: true)],
         theme: ThemeName.oneDark.rawValue,
         fontSize: 12,
@@ -56,11 +52,10 @@ struct AppSettings: Codable {
     )
 
     enum CodingKeys: String, CodingKey {
-        case servers, channels, theme, fontSize, fontFamily, defaultTemplate, windowOpacity, alwaysOnTop, passThroughWhenNotHovered, background, themeOverrides
+        case channels, theme, fontSize, fontFamily, defaultTemplate, windowOpacity, alwaysOnTop, passThroughWhenNotHovered, background, themeOverrides
     }
     init(from decoder: Decoder) throws {
         let c = try decoder.container(keyedBy: CodingKeys.self)
-        servers = (try? c.decode([ServerMachine].self, forKey: .servers)) ?? AppSettings.default.servers
         channels = (try? c.decode([ChannelEntry].self, forKey: .channels)) ?? AppSettings.default.channels
         theme = (try? c.decode(String.self, forKey: .theme)) ?? AppSettings.default.theme
         fontSize = (try? c.decode(Double.self, forKey: .fontSize)) ?? AppSettings.default.fontSize

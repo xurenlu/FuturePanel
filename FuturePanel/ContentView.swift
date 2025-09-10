@@ -13,9 +13,6 @@ import Combine
 // import SwiftData
 
 struct DemoConfig {
-    static let servers: [ServerMachine] = [
-        .init(id: "dev", name: "Local Dev", baseURL: URL(string: "http://localhost:8080")!, enabled: true)
-    ]
     static let channels: [ChannelEntry] = [
         .init(id: "events", path: "/events/app1", enabled: true)
     ]
@@ -33,7 +30,14 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            let topInset = max(0, settingsStore.settings.fontSize * 2 + 24)
+            // 顶部独立拖拽区域 + 关闭按钮
+            HeaderBar(fontSize: settingsStore.settings.fontSize) {
+                #if os(macOS)
+                NSApp.hide(nil)
+                #endif
+            }
+            .zIndex(8)
+
             let theme = ThemeName(rawValue: settingsStore.settings.theme) ?? .oneDark
             ZStack {
                 let bgPreset = BackgroundPreset(rawValue: settingsStore.settings.background) ?? .graphiteBlack
@@ -41,19 +45,13 @@ struct ContentView: View {
                 ScrollViewReader { proxy in
                     List(filteredMessages()) { msg in
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            let pal = ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides)
-                            Text("[\(msg.channel)]").foregroundColor(pal.colors[.second]!)
-                            Text(msg.timeString).foregroundColor(pal.colors[.normal]!)
-                            Spacer()
-                            Text(String(msg.id.suffix(6))).foregroundColor(pal.colors[.debug]!)
-                        }
-                        // Render using default DSL template
+                        // 仅使用 DSL 渲染，不再加默认前缀
                         let segments = TemplateEngine.renderSegments(
                             template: settingsStore.settings.defaultTemplate,
                             jsonString: msg.raw,
                             metaTimeString: msg.timeString,
-                            id: msg.id
+                            id: msg.id,
+                            path: msg.channel
                         )
                         styledText(from: segments, palette: ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides), keyword: keyword)
                             .font(.custom(settingsStore.settings.fontFamily, size: settingsStore.settings.fontSize))
@@ -74,38 +72,6 @@ struct ContentView: View {
                         }
                     }
                 }
-            }
-            // Draggable transparent area at the very top
-            .overlay(alignment: .topLeading) {
-                ZStack(alignment: .top) {
-                    // subtle visual affordance for draggable area
-                    Color(nsColor: .windowBackgroundColor)
-                        .opacity(0.12)
-                    DraggableAreaView()
-                        .background(Color.clear)
-                }
-                .frame(height: topInset)
-                .frame(maxWidth: .infinity)
-                .overlay(alignment: .bottom) {
-                    Rectangle()
-                        .fill(Color.white.opacity(0.07))
-                        .frame(height: 1)
-                }
-                .zIndex(7)
-            }
-            // Close icon pinned to top-right
-            .overlay(alignment: .topTrailing) {
-                Image(systemName: "xmark")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(ThemePalette.palette(for: theme, overrides: settingsStore.settings.themeOverrides).colors[.primary]!)
-                    .padding(.top, 6)
-                    .padding(.trailing, 6)
-                    .onTapGesture {
-                        #if os(macOS)
-                        NSApp.hide(nil)
-                        #endif
-                    }
-                    .zIndex(8)
             }
             // Keyword toolbar pinned to bottom-left
             .overlay(alignment: .bottomLeading) {
@@ -134,7 +100,7 @@ struct ContentView: View {
         }
         .onAppear {
             // Auto connect using settings
-            service.configureAndConnect(servers: settingsStore.settings.servers, channels: settingsStore.settings.channels)
+            service.configureAndConnect(channels: settingsStore.settings.channels)
         }
         .onHover { hovering in hoverToolbar = hovering }
         .frame(minHeight: miniMode ? (settingsStore.settings.fontSize * 3 + 36) : nil)

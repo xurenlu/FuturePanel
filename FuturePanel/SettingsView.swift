@@ -24,27 +24,9 @@ struct SettingsView: View {
             // Content - driven by sidebar "selection"
             Group {
                 if selection == 0 {
-                    // 数据来源：服务器 + 频道
+                    // 数据来源：仅 URI Path 列表（内置服务器域名）
                     Form {
-                        Section(header: Text("Servers").font(.headline)) {
-                            ForEach($store.settings.servers) { $s in
-                                HStack {
-                                    Toggle("", isOn: $s.enabled).labelsHidden()
-                                    TextField("Name", text: $s.name)
-                                    TextField("Base URL", text: Binding(
-                                        get: { s.baseURL.absoluteString },
-                                        set: { s.baseURL = URL(string: $0) ?? s.baseURL }
-                                    ))
-                                }
-                            }
-                            HStack {
-                                Button("添加服务器") {
-                                    store.settings.servers.append(ServerMachine(name: "New Server", baseURL: URL(string: "http://localhost:8080")!, enabled: false))
-                                }
-                                Spacer()
-                            }
-                        }
-                        Section(header: Text("Channels").font(.headline)) {
+                        Section(header: Text("订阅的 URI 路径").font(.headline)) {
                             ForEach($store.settings.channels) { $c in
                                 HStack {
                                     Toggle("", isOn: $c.enabled).labelsHidden()
@@ -52,7 +34,7 @@ struct SettingsView: View {
                                 }
                             }
                             HStack {
-                                Button("添加频道") {
+                                Button("添加路径") {
                                     store.settings.channels.append(ChannelEntry(path: "/events/new", enabled: false))
                                 }
                                 Spacer()
@@ -87,6 +69,7 @@ struct SettingsView: View {
                                             Text("$TIME：时间 (HH:mm:ss)")
                                             Text("$UUID：消息ID")
                                             Text("$LAST6：消息ID后6位（也兼容旧 $UUID_LAST6）")
+                                            Text("$PATH：URI 路径（频道），例如 /events/app1")
                                             Text("${.field}：JSON 字段，支持 KeyPath，如 ${.body.level}")
                                         }
                                         .font(.system(.caption, design: .monospaced))
@@ -180,7 +163,7 @@ struct ThemePreviewView: View {
                     }
                     HStack {
                         Text("透明度")
-                        Slider(value: $store.settings.windowOpacity, in: 0.4...1.0, step: 0.01)
+                        Slider(value: $store.settings.windowOpacity, in: 0.05...1.0, step: 0.01)
                     }
                     Toggle("始终置顶", isOn: $store.settings.alwaysOnTop)
                     Toggle("非悬停时点击穿透", isOn: $store.settings.passThroughWhenNotHovered)
@@ -208,7 +191,8 @@ struct ThemePreviewView: View {
             template: store.settings.defaultTemplate,
             jsonString: sampleJSON,
             metaTimeString: df.string(from: now),
-            id: UUID().uuidString
+            id: UUID().uuidString,
+            path: "/events/app1"
         )
     }
 }
@@ -265,7 +249,7 @@ struct DisplaySettingsView: View {
                     }
                     HStack {
                         Text("透明度")
-                        Slider(value: $store.settings.windowOpacity, in: 0.4...1.0, step: 0.01)
+                        Slider(value: $store.settings.windowOpacity, in: 0.05...1.0, step: 0.01)
                     }
                     Toggle("始终置顶", isOn: $store.settings.alwaysOnTop)
                     Toggle("非悬停时点击穿透", isOn: $store.settings.passThroughWhenNotHovered)
@@ -312,7 +296,8 @@ struct DisplaySettingsView: View {
             template: store.settings.defaultTemplate,
             jsonString: sampleJSON,
             metaTimeString: df.string(from: now),
-            id: UUID().uuidString
+            id: UUID().uuidString,
+            path: "/events/app1"
         )
     }
 }
@@ -327,7 +312,8 @@ private extension SettingsView {
             template: store.settings.defaultTemplate,
             jsonString: sampleJSON,
             metaTimeString: df.string(from: now),
-            id: UUID().uuidString
+            id: UUID().uuidString,
+            path: "/events/app1"
         )
     }
 
@@ -342,7 +328,8 @@ private extension SettingsView {
             template: dsl,
             jsonString: sampleJSON,
             metaTimeString: df.string(from: now),
-            id: UUID().uuidString
+            id: UUID().uuidString,
+            path: "/events/app1"
         )
     }
 }

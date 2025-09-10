@@ -1,37 +1,7 @@
 import Foundation
 import Combine
 
-struct ServerMachine: Identifiable, Hashable, Codable {
-    let id: String
-    var name: String
-    var baseURL: URL
-    var enabled: Bool
-
-    init(id: String = UUID().uuidString, name: String, baseURL: URL, enabled: Bool) {
-        self.id = id
-        self.name = name
-        self.baseURL = baseURL
-        self.enabled = enabled
-    }
-
-    enum CodingKeys: String, CodingKey { case id, name, baseURL, enabled }
-    init(from decoder: Decoder) throws {
-        let c = try decoder.container(keyedBy: CodingKeys.self)
-        id = try c.decode(String.self, forKey: .id)
-        name = try c.decode(String.self, forKey: .name)
-        let urlString = try c.decode(String.self, forKey: .baseURL)
-        guard let u = URL(string: urlString) else { throw DecodingError.dataCorruptedError(forKey: .baseURL, in: c, debugDescription: "invalid url") }
-        baseURL = u
-        enabled = try c.decode(Bool.self, forKey: .enabled)
-    }
-    func encode(to encoder: Encoder) throws {
-        var c = encoder.container(keyedBy: CodingKeys.self)
-        try c.encode(id, forKey: .id)
-        try c.encode(name, forKey: .name)
-        try c.encode(baseURL.absoluteString, forKey: .baseURL)
-        try c.encode(enabled, forKey: .enabled)
-    }
-}
+// 移除 ServerMachine：服务器使用内置域名，不再由设置管理
 
 struct ChannelEntry: Identifiable, Hashable, Codable {
     let id: String

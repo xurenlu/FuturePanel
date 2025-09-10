@@ -67,6 +67,33 @@ struct DraggableAreaView: NSViewRepresentable {
     }
     func updateNSView(_ nsView: NSView, context: Context) {}
 }
+
+// 顶部独立头部区域（可拖拽 + 关闭按钮）
+struct HeaderBar: View {
+    let fontSize: Double
+    var onClose: () -> Void
+    var body: some View {
+        ZStack(alignment: .topLeading) {
+            // 背景与底部分割线
+            Color(nsColor: .windowBackgroundColor).opacity(0.12)
+            HStack(spacing: 0) {
+                DraggableAreaView()
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .semibold))
+                }
+                .buttonStyle(.plain)
+                .padding(.top, 8)
+                .padding(.trailing, 10)
+            }
+        }
+        .frame(height: CGFloat(fontSize * 1.5 + 10))
+        .overlay(alignment: .bottom) {
+            Rectangle().fill(Color.white.opacity(0.07)).frame(height: 1)
+        }
+    }
+}
 struct SettingsWindowLevelHelper: NSViewRepresentable {
     func makeNSView(context: Context) -> NSView {
         let view = NSView()

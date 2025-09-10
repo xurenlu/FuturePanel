@@ -10,30 +10,15 @@ import (
 
 // Config 代表 jslwatcher 的配置
 type Config struct {
-	Servers []ServerConfig `yaml:"servers"`
-	Files   []FileConfig   `yaml:"files"`
-	General GeneralConfig  `yaml:"general"`
-}
-
-// ServerConfig 服务器连接配置
-type ServerConfig struct {
-	Name     string          `yaml:"name"`
-	URL      string          `yaml:"url"`
-	Channels []ChannelConfig `yaml:"channels"`
-}
-
-// ChannelConfig 频道配置
-type ChannelConfig struct {
-	Name string `yaml:"name"`
-	Path string `yaml:"path"`
+	Files   []FileConfig  `yaml:"files"`
+	General GeneralConfig `yaml:"general"`
 }
 
 // FileConfig 文件监控配置
 type FileConfig struct {
-	Path     string   `yaml:"path"`
-	Format   string   `yaml:"format"`   // jsonlines, nginx-access, nginx-error, java-log, php-error
-	Channels []string `yaml:"channels"` // 发送到哪些 channel
-	Servers  []string `yaml:"servers"`  // 发送到哪些服务器
+	Path   string   `yaml:"path"`
+	Format string   `yaml:"format"` // jsonlines, nginx-access, nginx-error, java-log, php-error
+	Paths  []string `yaml:"paths"`  // 发送到哪些 URI 路径（如 /events/app1）
 }
 
 // GeneralConfig 通用配置
@@ -48,28 +33,16 @@ type GeneralConfig struct {
 // DefaultConfig 返回默认配置
 func DefaultConfig() *Config {
 	return &Config{
-		Servers: []ServerConfig{
-			{
-				Name: "local",
-				URL:  "ws://localhost:8080/ws",
-				Channels: []ChannelConfig{
-					{Name: "default", Path: "/logs/default"},
-					{Name: "errors", Path: "/logs/errors"},
-				},
-			},
-		},
 		Files: []FileConfig{
 			{
-				Path:     "/var/log/nginx/access.log",
-				Format:   "nginx-access",
-				Channels: []string{"default"},
-				Servers:  []string{"local"},
+				Path:   "/var/log/nginx/access.log",
+				Format: "nginx-access",
+				Paths:  []string{"/logs/default"},
 			},
 			{
-				Path:     "/var/log/nginx/error.log",
-				Format:   "nginx-error",
-				Channels: []string{"errors"},
-				Servers:  []string{"local"},
+				Path:   "/var/log/nginx/error.log",
+				Format: "nginx-error",
+				Paths:  []string{"/logs/errors"},
 			},
 		},
 		General: GeneralConfig{
@@ -139,29 +112,9 @@ func createDefaultConfig(configPath string) error {
 
 // Validate 验证配置
 func (c *Config) Validate() error {
-	if len(c.Servers) == 0 {
-		return fmt.Errorf("at least one server must be configured")
-	}
-
 	if len(c.Files) == 0 {
 		return fmt.Errorf("at least one file must be configured")
 	}
-
-	// 验证服务器配置
-	serverNames := make(map[string]bool)
-	for _, server := range c.Servers {
-		if server.Name == "" {
-			return fmt.Errorf("server name cannot be empty")
-		}
-		if server.URL == "" {
-			return fmt.Errorf("server URL cannot be empty for server %s", server.Name)
-		}
-		if serverNames[server.Name] {
-			return fmt.Errorf("duplicate server name: %s", server.Name)
-		}
-		serverNames[server.Name] = true
-	}
-
 	// 验证文件配置
 	for _, file := range c.Files {
 		if file.Path == "" {
@@ -170,15 +123,8 @@ func (c *Config) Validate() error {
 		if file.Format == "" {
 			return fmt.Errorf("file format cannot be empty for file %s", file.Path)
 		}
-		if len(file.Servers) == 0 {
-			return fmt.Errorf("at least one server must be specified for file %s", file.Path)
-		}
-
-		// 验证引用的服务器是否存在
-		for _, serverName := range file.Servers {
-			if !serverNames[serverName] {
-				return fmt.Errorf("unknown server '%s' referenced in file %s", serverName, file.Path)
-			}
+		if len(file.Paths) == 0 {
+			return fmt.Errorf("at least one uri path must be specified for file %s", file.Path)
 		}
 	}
 

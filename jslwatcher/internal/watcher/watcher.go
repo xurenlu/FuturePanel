@@ -42,9 +42,8 @@ type FileInfo struct {
 
 // LogEvent 日志事件
 type LogEvent struct {
-	Entry    *parser.LogEntry
-	Channels []string
-	Servers  []string
+	Entry *parser.LogEntry
+	Paths []string
 }
 
 // NewFileWatcher 创建新的文件监控器
@@ -359,9 +358,8 @@ func (fw *FileWatcher) processLogLine(fileInfo *FileInfo, line string) error {
 
 	// 创建日志事件
 	event := &LogEvent{
-		Entry:    entry,
-		Channels: fileInfo.Config.Channels,
-		Servers:  fileInfo.Config.Servers,
+		Entry: entry,
+		Paths: fileInfo.Config.Paths,
 	}
 
 	// 发送到事件通道

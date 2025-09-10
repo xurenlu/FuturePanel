@@ -64,8 +64,7 @@ func main() {
 
 	log.Printf("Starting jslwatcher %s", version)
 	log.Printf("Config loaded from: %s", *configPath)
-	log.Printf("Monitoring %d files, connecting to %d servers",
-		len(cfg.Files), len(cfg.Servers))
+	log.Printf("Monitoring %d files", len(cfg.Files))
 
 	// 创建文件监控器
 	fileWatcher, err := watcher.NewFileWatcher(cfg)
@@ -73,7 +72,7 @@ func main() {
 		log.Fatalf("Failed to create file watcher: %v", err)
 	}
 
-	// 创建 WebSocket 客户端
+	// 创建 HTTP 客户端
 	wsClient := client.NewClient(cfg, fileWatcher.GetEventChan())
 
 	// 设置信号处理
@@ -86,7 +85,7 @@ func main() {
 	}
 
 	if err := wsClient.Start(); err != nil {
-		log.Fatalf("Failed to start WebSocket client: %v", err)
+		log.Fatalf("Failed to start HTTP client: %v", err)
 	}
 
 	log.Println("jslwatcher started successfully")
@@ -103,7 +102,7 @@ func main() {
 
 	// 优雅关闭
 	if err := wsClient.Stop(); err != nil {
-		log.Printf("Error stopping WebSocket client: %v", err)
+		log.Printf("Error stopping HTTP client: %v", err)
 	}
 
 	if err := fileWatcher.Stop(); err != nil {

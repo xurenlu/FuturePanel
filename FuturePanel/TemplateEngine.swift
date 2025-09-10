@@ -1,7 +1,7 @@
 import Foundation
 
 struct TemplateEngine {
-    static func render(template: String, jsonString: String, metaTimeString: String, id: String) -> String {
+    static func render(template: String, jsonString: String, metaTimeString: String, id: String, path: String) -> String {
         // Very small subset to support constants and simple ${.field} extraction
         var output = template
 
@@ -9,6 +9,8 @@ struct TemplateEngine {
         // New canonical name $DTIME, keep $DATE_TIME for backward compatibility
         output = output.replacingOccurrences(of: "$DTIME", with: metaTimeString)
         output = output.replacingOccurrences(of: "$DATE_TIME", with: metaTimeString)
+        // $PATH: uri path/channel
+        output = output.replacingOccurrences(of: "$PATH", with: path)
         // derive $DATE and $TIME from metaTimeString (format yyyy-MM-dd HH:mm:ss)
         var datePart = metaTimeString
         var timePart = metaTimeString
@@ -53,11 +55,12 @@ struct TemplateEngine {
         let text: String
     }
 
-    static func renderSegments(template: String, jsonString: String, metaTimeString: String, id: String) -> [StyledSegment] {
+    static func renderSegments(template: String, jsonString: String, metaTimeString: String, id: String, path: String) -> [StyledSegment] {
         // Apply the same replacements/functions as render(), but do NOT strip styles.
         var output = template
         output = output.replacingOccurrences(of: "$DTIME", with: metaTimeString)
         output = output.replacingOccurrences(of: "$DATE_TIME", with: metaTimeString)
+        output = output.replacingOccurrences(of: "$PATH", with: path)
         var datePart = metaTimeString
         var timePart = metaTimeString
         let comps = metaTimeString.split(separator: " ")
