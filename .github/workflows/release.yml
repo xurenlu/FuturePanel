@@ -137,10 +137,10 @@ jobs:
           echo "#### JSLWatcher (Linux)" >> $GITHUB_OUTPUT
           echo '```bash' >> $GITHUB_OUTPUT
           echo "# 一键安装" >> $GITHUB_OUTPUT
-          echo "curl -fsSL https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh | sudo bash" >> $GITHUB_OUTPUT
+          echo "curl -fsSL https://raw.githubusercontent.com/${{ github.repository }}/main/jslwatcher/scripts/install.sh | sudo bash" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "# 或手动下载安装" >> $GITHUB_OUTPUT
-          echo "wget https://github.com/rocky/futurepanel/releases/download/${{ steps.version.outputs.VERSION }}/jslwatcher_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo "wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/jslwatcher_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz" >> $GITHUB_OUTPUT
           echo "tar -xzf jslwatcher_${{ steps.version.outputs.VERSION }}_linux_amd64.tar.gz" >> $GITHUB_OUTPUT
           echo "sudo mv jslwatcher /usr/local/bin/" >> $GITHUB_OUTPUT
           echo '```' >> $GITHUB_OUTPUT
@@ -148,16 +148,16 @@ jobs:
           echo "#### Server (macOS)" >> $GITHUB_OUTPUT
           echo '```bash' >> $GITHUB_OUTPUT
           echo "# 下载 macOS 版本" >> $GITHUB_OUTPUT
-          echo "wget https://github.com/rocky/futurepanel/releases/download/${{ steps.version.outputs.VERSION }}/futurepanel-server_${{ steps.version.outputs.VERSION }}_darwin_amd64.tar.gz" >> $GITHUB_OUTPUT
+          echo "wget https://github.com/${{ github.repository }}/releases/download/${{ steps.version.outputs.VERSION }}/futurepanel-server_${{ steps.version.outputs.VERSION }}_darwin_amd64.tar.gz" >> $GITHUB_OUTPUT
           echo "tar -xzf futurepanel-server_${{ steps.version.outputs.VERSION }}_darwin_amd64.tar.gz" >> $GITHUB_OUTPUT
           echo '```' >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "### 📚 文档" >> $GITHUB_OUTPUT
-          echo "- [JSLWatcher 使用指南](https://github.com/rocky/futurepanel/tree/main/jslwatcher)" >> $GITHUB_OUTPUT
-          echo "- [配置文件说明](https://github.com/rocky/futurepanel/blob/main/jslwatcher/README.md)" >> $GITHUB_OUTPUT
+          echo "- [JSLWatcher 使用指南](https://github.com/${{ github.repository }}/tree/main/jslwatcher)" >> $GITHUB_OUTPUT
+          echo "- [配置文件说明](https://github.com/${{ github.repository }}/blob/main/jslwatcher/README.md)" >> $GITHUB_OUTPUT
           echo "" >> $GITHUB_OUTPUT
           echo "---" >> $GITHUB_OUTPUT
-          echo "**完整变更日志**: https://github.com/rocky/futurepanel/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          echo "**完整变更日志**: https://github.com/${{ github.repository }}/compare/$(git describe --tags --abbrev=0 HEAD^)...${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
           echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
