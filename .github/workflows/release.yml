@@ -2,24 +2,25 @@ name: Release
 
 on:
   push:
+    branches:
+      - main
+    paths:
+      - 'jslwatcher/**'
     tags:
       - '1.*'
+      - 'v1.*'
+  workflow_dispatch:
 
 env:
   GO_VERSION: '1.21'
 
 jobs:
   build:
-    name: Build binaries
+    name: Build jslwatcher
     runs-on: ubuntu-latest
     strategy:
       matrix:
         include:
-          # Server binaries
-          - name: server
-            path: ./server
-            binary: futurepanel-server
-          # JSLWatcher binaries  
           - name: jslwatcher
             path: ./jslwatcher
             binary: jslwatcher
@@ -94,6 +95,7 @@ jobs:
     name: Create Release
     needs: build
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
     permissions:
       contents: write
     
@@ -175,6 +177,7 @@ jobs:
     name: Generate checksums
     needs: create-release
     runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
     
     steps:
       - name: Download all artifacts
