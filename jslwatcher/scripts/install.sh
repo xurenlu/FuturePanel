@@ -129,16 +129,27 @@ download_binary() {
     fi
     
     # 解压
-    tar -xzf $binary_name
+    tar -xzf "$binary_name"
     
-    # 安装到系统目录
-    if [ -f "jslwatcher" ]; then
-        install -m 755 jslwatcher $INSTALL_DIR/jslwatcher
+    # 安装到系统目录（兼容带版本号与架构后缀的二进制名）
+    local extracted_binary="jslwatcher_${LATEST_VERSION}_linux_${ARCH}"
+    if [ -f "$extracted_binary" ]; then
+        install -m 755 "$extracted_binary" "$INSTALL_DIR/jslwatcher"
+        log_info "二进制文件已安装到 $INSTALL_DIR/jslwatcher"
+    elif [ -f "jslwatcher" ]; then
+        install -m 755 "jslwatcher" "$INSTALL_DIR/jslwatcher"
         log_info "二进制文件已安装到 $INSTALL_DIR/jslwatcher"
     else
-        log_error "二进制文件不存在"
-        rm -rf $temp_dir
-        exit 1
+        # 尝试自动匹配 jslwatcher_* 文件
+        local candidate=$(find . -maxdepth 1 -type f -name "jslwatcher_*" | head -n1)
+        if [ -n "$candidate" ] && [ -f "$candidate" ]; then
+            install -m 755 "$candidate" "$INSTALL_DIR/jslwatcher"
+            log_info "二进制文件已安装到 $INSTALL_DIR/jslwatcher"
+        else
+            log_error "二进制文件不存在"
+            rm -rf "$temp_dir"
+            exit 1
+        fi
     fi
     
     # 清理临时文件
