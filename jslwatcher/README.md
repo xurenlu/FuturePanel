@@ -18,10 +18,10 @@ JSLWatcher 是一个高性能的日志文件监控和转发服务，专为 Linux
 
 ```bash
 # 下载并执行安装脚本
-curl -fsSL https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/xurenlu/FuturePanel/main/jslwatcher/scripts/install.sh | sudo bash
 
 # 或者先下载再执行
-wget https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh
+wget https://raw.githubusercontent.com/xurenlu/FuturePanel/main/jslwatcher/scripts/install.sh
 chmod +x install.sh
 sudo ./install.sh
 ```
@@ -32,10 +32,10 @@ sudo ./install.sh
 
 ```bash
 # 获取最新版本
-VERSION=$(curl -s https://api.github.com/repos/rocky/futurepanel/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
+VERSION=$(curl -s https://api.github.com/repos/xurenlu/FuturePanel/releases/latest | grep '"tag_name":' | sed -E 's/.*"([^"]+)".*/\1/')
 
 # 下载对应架构的二进制文件 (以 linux/amd64 为例)
-wget https://github.com/rocky/futurepanel/releases/download/$VERSION/jslwatcher_${VERSION}_linux_amd64.tar.gz
+wget https://github.com/xurenlu/FuturePanel/releases/download/$VERSION/jslwatcher_${VERSION}_linux_amd64.tar.gz
 
 # 解压并安装
 tar -xzf jslwatcher_${VERSION}_linux_amd64.tar.gz
@@ -397,7 +397,7 @@ sudo sed -i 's|/etc/jslwatcher/jslwatcher.conf|/etc/jslwatcher-app1/jslwatcher.c
 使用安装脚本可以自动升级到最新版本：
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh | sudo bash
+curl -fsSL https://raw.githubusercontent.com/xurenlu/FuturePanel/main/jslwatcher/scripts/install.sh | sudo bash
 ```
 
 ### 手动升级
@@ -445,7 +445,7 @@ sudo systemctl start jslwatcher
 ### 使用卸载脚本
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/rocky/futurepanel/main/jslwatcher/scripts/install.sh | sudo bash -s uninstall
+curl -fsSL https://raw.githubusercontent.com/xurenlu/FuturePanel/main/jslwatcher/scripts/install.sh | sudo bash -s uninstall
 ```
 
 ### 手动卸载
@@ -483,7 +483,7 @@ sudo userdel jslwatcher
 
 ### 报告问题
 
-请在 [GitHub Issues](https://github.com/rocky/futurepanel/issues) 中报告：
+请在 [GitHub Issues](https://github.com/xurenlu/FuturePanel/issues) 中报告：
 
 - Bug 报告
 - 功能请求
@@ -500,8 +500,8 @@ sudo userdel jslwatcher
 
 ```bash
 # 克隆项目
-git clone https://github.com/rocky/futurepanel.git
-cd futurepanel/jslwatcher
+git clone https://github.com/xurenlu/FuturePanel.git
+cd FuturePanel/jslwatcher
 
 # 安装依赖
 go mod download

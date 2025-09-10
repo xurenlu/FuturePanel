@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/rocky/futurepanel/jslwatcher/internal/config"
-	"github.com/rocky/futurepanel/jslwatcher/internal/watcher"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/config"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/watcher"
 )
 
 // Client HTTP 客户端（POST JSON 到内置域名）

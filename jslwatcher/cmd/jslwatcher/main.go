@@ -10,9 +10,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/rocky/futurepanel/jslwatcher/internal/client"
-	"github.com/rocky/futurepanel/jslwatcher/internal/config"
-	"github.com/rocky/futurepanel/jslwatcher/internal/watcher"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/client"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/config"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/watcher"
 )
 
 var (
@@ -145,7 +145,7 @@ func showUsage() {
 
 配置文件格式:
   配置文件使用 YAML 格式，详细说明请参考:
-  https://github.com/rocky/futurepanel/blob/main/jslwatcher/README.md
+  https://github.com/xurenlu/FuturePanel/blob/main/jslwatcher/README.md
 
 `)
 }

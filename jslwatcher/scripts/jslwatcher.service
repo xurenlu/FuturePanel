@@ -1,6 +1,6 @@
 [Unit]
 Description=JSLWatcher - 日志文件监控和转发服务
-Documentation=https://github.com/rocky/futurepanel/tree/main/jslwatcher
+Documentation=https://github.com/xurenlu/FuturePanel/tree/main/jslwatcher
 After=network.target
 Wants=network.target
 

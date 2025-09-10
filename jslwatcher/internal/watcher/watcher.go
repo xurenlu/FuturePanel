@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/fsnotify/fsnotify"
-	"github.com/rocky/futurepanel/jslwatcher/internal/config"
-	"github.com/rocky/futurepanel/jslwatcher/internal/parser"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/config"
+	"github.com/xurenlu/FuturePanel/jslwatcher/internal/parser"
 )
 
 // FileWatcher 文件监控器
